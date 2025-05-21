@@ -68,6 +68,24 @@ impl SparseMatrix {
         SparseMatrix { matrix, rows, cols }
     }
 
+    pub fn write_to_file(&self, file_name: String) {
+        let mut file = match File::create(&file_name) {
+            Ok(file) => file,
+            Err(why) => {
+                println!("Couldn't create {}: {}", &file_name, why);
+                exit(1);
+            },
+        };
+        let mut contents = String::new();
+        contents.push_str(&format!("rows={}\n", self.rows));
+        contents.push_str(&format!("cols={}\n", self.cols));
+        for ((x, y), value) in &self.matrix {
+            contents.push_str(&format!("({}, {}, {})\n", x, y, value));
+        }
+        contents.push_str(&format!("({})", self.rows * self.cols));
+        file.write_all(contents.as_bytes()).unwrap();
+    }
+
     fn peek_value(&self, row: i64, col: i64) -> i64 {
         match self.matrix.get(&(row, col)) {
             Some(value) => *value,

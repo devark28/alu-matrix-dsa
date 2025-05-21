@@ -36,4 +36,6 @@ fn main() {
         Op::Sub(_) => matrix_1 - matrix_2,
         Op::Mul(_) => matrix_1 * matrix_2,
     };
+
+    result.write_to_file(matrix_file_3);
 }
