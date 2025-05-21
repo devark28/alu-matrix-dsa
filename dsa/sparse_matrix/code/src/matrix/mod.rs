@@ -27,7 +27,7 @@ impl SparseMatrix {
             Err(why) => {
                 println!("Couldn't open {}: {}", &file_name, why);
                 exit(1);
-            },
+            }
         };
         let mut rows = 0;
         let mut cols = 0;
@@ -74,7 +74,7 @@ impl SparseMatrix {
             Err(why) => {
                 println!("Couldn't create {}: {}", &file_name, why);
                 exit(1);
-            },
+            }
         };
         let mut contents = String::new();
         contents.push_str(&format!("rows={}\n", self.rows));
@@ -82,34 +82,41 @@ impl SparseMatrix {
         for ((x, y), value) in &self.matrix {
             contents.push_str(&format!("({}, {}, {})\n", x, y, value));
         }
-        contents.push_str(&format!("({})", self.rows * self.cols));
         file.write_all(contents.as_bytes()).unwrap();
     }
 
-    fn peek_value(&self, row: i64, col: i64) -> i64 {
+    fn peek_value(&self, row: i64, col: i64) -> Option<i64> {
         match self.matrix.get(&(row, col)) {
-            Some(value) => *value,
-            None if row <= self.rows && col <= self.cols => 0,
+            Some(value) => Some(*value),
+            None if row <= self.rows && col <= self.cols => None,
             None => {
                 println!("Matrix value not found");
                 exit(1)
-            },
+            }
         }
     }
 
-    fn consume_value(&mut self, row: i64, col: i64) -> i64 {
+    fn consume_value(&mut self, row: i64, col: i64) -> Option<i64> {
         match self.matrix.remove(&(row, col)) {
-            Some(value) => value,
-            None if row <= self.rows && col <= self.cols => 0,
+            Some(value) => Some(value),
+            None if row <= self.rows && col <= self.cols => None,
             None => {
                 println!("Matrix value not found");
                 exit(1)
-            },
+            }
         }
     }
 
     fn add_to_value(&mut self, row: i64, col: i64, value: i64) {
-        self.matrix.insert((row, col), self.peek_value(row, col) + value);
+        if let Some(peeked_value) = self.peek_value(row, col) {
+            if peeked_value + value == 0 {
+                self.matrix.remove(&(row, col));
+            } else {
+                self.matrix.insert((row, col), peeked_value + value);
+            }
+        } else if value != 0 {
+            self.matrix.insert((row, col), value);
+        }
     }
 }
 
@@ -122,10 +129,18 @@ impl Add for SparseMatrix {
         }
         let mut matrix: HashMap<(i64, i64), i64> = HashMap::new();
         for ((x, y), value) in &self.matrix {
-            matrix.insert((*x, *y), value + other.consume_value(*x, *y));
+            if let Some(consumed_value) = other.consume_value(*x, *y) {
+                if value + consumed_value != 0 {
+                    matrix.insert((*x, *y), value + consumed_value);
+                }
+            }
         }
         for ((x, y), value) in &other.matrix {
-            matrix.insert((*x, *y), value + self.consume_value(*x, *y));
+            if let Some(consumed_value) = self.consume_value(*x, *y) {
+                if value + consumed_value != 0 {
+                    matrix.insert((*x, *y), value + consumed_value);
+                }
+            }
         }
         SparseMatrix {
             matrix,
@@ -144,10 +159,18 @@ impl Sub for SparseMatrix {
         }
         let mut matrix: HashMap<(i64, i64), i64> = HashMap::new();
         for ((x, y), value) in &self.matrix {
-            matrix.insert((*x, *y), value + other.consume_value(*x, *y));
+            if let Some(consumed_value) = other.consume_value(*x, *y) {
+                if value - consumed_value != 0 {
+                    matrix.insert((*x, *y), value - consumed_value);
+                }
+            }
         }
         for ((x, y), value) in &other.matrix {
-            matrix.insert((*x, *y), value + self.consume_value(*x, *y));
+            if let Some(consumed_value) = self.consume_value(*x, *y) {
+                if consumed_value - value != 0 {
+                    matrix.insert((*x, *y), consumed_value - value);
+                }
+            }
         }
         SparseMatrix {
             matrix,
@@ -164,59 +187,22 @@ impl Mul for SparseMatrix {
             println!("Matrix dimension mismatch");
             exit(1);
         }
-        // let mut matrix: HashMap<(i64, i64), i64> = HashMap::new();
-        // for ((a, _b), value) in &self.matrix {
-        //     for ((_x, y), value2) in &other.matrix {
-        //         matrix.insert(
-        //             (*a, *y),
-        //             matrix.get(&(*a, *y)).unwrap_or(&0) + value * value2,
-        //         );
-        //     }
-        // }
-        // SparseMatrix {
-        //     matrix,
-        //     rows: self.rows,
-        //     cols: other.cols,
-        // }
+        let group_other_by_row =
+            other
+                .matrix
+                .iter()
+                .fold(HashMap::new(), |mut acc, ((x, y), value)| {
+                    acc.entry(*x).or_insert_with(Vec::new).push((*y, *value));
+                    acc
+                });
         let mut matrix: SparseMatrix = SparseMatrix::new(self.rows, other.cols);
         for ((a, b), value) in &self.matrix {
-            for ((x, y), value2) in &other.matrix {
-                if b != x {
-                    break;
+            if let Some(values) = group_other_by_row.get(b) {
+                for (c, value2) in values {
+                    matrix.add_to_value(*a, *c, value * value2);
                 }
-                matrix.add_to_value(*a, *y, value * value2);
             }
         }
         matrix
     }
 }
-
-// impl Mul for SparseMatrix {
-//     type Output = SparseMatrix;
-//     fn mul(self, other: SparseMatrix) -> SparseMatrix {
-//         if self.cols != other.rows {
-//             println!("Matrix dimension mismatch");
-//             exit(1);
-//         }
-//         let mut matrix: HashMap<(i64, i64), i64> = HashMap::new();
-//
-//         for i in 1..=self.rows {
-//             for k in 1..=other.cols {
-//                 let mut sum = 0;
-//                 // Check all elements where self's column == other's row
-//                 for j in 1..=self.cols {
-//                     sum += self.peek_value(i, j) * other.peek_value(j, k);
-//                 }
-//                 if sum != 0 {
-//                     matrix.insert((i, k), sum);
-//                 }
-//             }
-//         }
-//
-//         SparseMatrix {
-//             matrix,
-//             rows: self.rows,
-//             cols: other.cols,
-//         }
-//     }
-// }
