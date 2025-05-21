@@ -133,6 +133,8 @@ impl Add for SparseMatrix {
                 if value + consumed_value != 0 {
                     matrix.insert((*x, *y), value + consumed_value);
                 }
+            } else if *value != 0 {
+                matrix.insert((*x, *y), *value);
             }
         }
         for ((x, y), value) in &other.matrix {
@@ -140,6 +142,8 @@ impl Add for SparseMatrix {
                 if value + consumed_value != 0 {
                     matrix.insert((*x, *y), value + consumed_value);
                 }
+            } else if *value != 0 {
+                matrix.insert((*x, *y), *value);
             }
         }
         SparseMatrix {
@@ -163,6 +167,8 @@ impl Sub for SparseMatrix {
                 if value - consumed_value != 0 {
                     matrix.insert((*x, *y), value - consumed_value);
                 }
+            } else if *value != 0 {
+                matrix.insert((*x, *y), *value);
             }
         }
         for ((x, y), value) in &other.matrix {
@@ -170,6 +176,8 @@ impl Sub for SparseMatrix {
                 if consumed_value - value != 0 {
                     matrix.insert((*x, *y), consumed_value - value);
                 }
+            } else if *value != 0 {
+                matrix.insert((*x, *y), *value);
             }
         }
         SparseMatrix {
