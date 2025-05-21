@@ -35,7 +35,10 @@ Matrix DSA can be built on Linux, macOS, or Windows. Follow the steps below for 
   ```bash
   curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
   ```
-  Follow the on-screen instructions to complete the installation.
+  Follow the on-screen instructions to complete the installation. Then, restart your terminal or run:
+  ```bash
+  source ~/.cargo/env
+  ```
 
 - **Windows:**  
   Download and run `rustup-init.exe` from the official Rust website. Follow the installation prompts.
