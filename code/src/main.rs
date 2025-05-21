@@ -30,4 +30,10 @@ fn main() {
         matrix_2.rows,
         matrix_2.cols
     );
+
+    let result = match op {
+        Op::Add(_) => matrix_1 + matrix_2,
+        Op::Sub(_) => matrix_1 - matrix_2,
+        Op::Mul(_) => matrix_1 * matrix_2,
+    };
 }
