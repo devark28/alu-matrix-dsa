@@ -17,7 +17,7 @@ pub fn extract_args() -> (Op, String, String, String) {
         "sub" => Op::Sub('-'),
         "mul" => Op::Mul('*'),
         _ => {
-            println!("Invalid operation");
+            println!("Invalid operation! Try add, sub, or mul");
             exit(1);
         }
     };

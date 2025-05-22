@@ -24,8 +24,8 @@ impl SparseMatrix {
         let mut matrix: HashMap<(i64, i64), i64> = HashMap::new();
         let file = match File::open(&file_name) {
             Ok(file) => file,
-            Err(why) => {
-                println!("Couldn't open {}: {}", &file_name, why);
+            Err(_) => {
+                println!("Couldn't open {}: No such file", &file_name);
                 exit(1);
             }
         };
@@ -71,8 +71,8 @@ impl SparseMatrix {
     pub fn write_to_file(&self, file_name: String) {
         let mut file = match File::create(&file_name) {
             Ok(file) => file,
-            Err(why) => {
-                println!("Couldn't create {}: {}", &file_name, why);
+            Err(_) => {
+                println!("Couldn't create or write to {}", &file_name);
                 exit(1);
             }
         };
@@ -124,7 +124,7 @@ impl Add for SparseMatrix {
     type Output = SparseMatrix;
     fn add(mut self, mut other: SparseMatrix) -> SparseMatrix {
         if self.rows != other.rows || self.cols != other.cols {
-            println!("Matrix dimension mismatch");
+            println!("Matrix dimension mismatch. Use mxn + axb matrices where m=n and a=b");
             exit(1);
         }
         let mut matrix: HashMap<(i64, i64), i64> = HashMap::new();
@@ -158,7 +158,7 @@ impl Sub for SparseMatrix {
     type Output = SparseMatrix;
     fn sub(mut self, mut other: SparseMatrix) -> SparseMatrix {
         if self.rows != other.rows || self.cols != other.cols {
-            println!("Matrix dimension mismatch");
+            println!("Matrix dimension mismatch. Use mxn - axb matrices where m=n and a=b");
             exit(1);
         }
         let mut matrix: HashMap<(i64, i64), i64> = HashMap::new();
@@ -192,7 +192,7 @@ impl Mul for SparseMatrix {
     type Output = SparseMatrix;
     fn mul(self, other: SparseMatrix) -> SparseMatrix {
         if self.cols != other.rows {
-            println!("Matrix dimension mismatch");
+            println!("Matrix dimension mismatch. Use mxn * axb matrices where n=a");
             exit(1);
         }
         let group_other_by_row =
