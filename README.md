@@ -24,7 +24,7 @@ cols=<number_of_columns>
 ...
 ```
 
-## Installation
+## Installation (consider [pre-built v0.2.0 releases](https://github.com/devark28/alu-matrix-dsa/releases/tag/v0.2.0) for windows and linux)
 
 Matrix DSA can be built on Linux, macOS, or Windows. Follow the steps below for your platform.
 
